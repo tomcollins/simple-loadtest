@@ -98,7 +98,7 @@ function update() {
   time = new Date().getTime();
   elapsedTime = time - updateTime;
   updateTime = time;
-  console.log('Update: ' +Number(requestsSinceUpdate/(elapsedTime/1000)).toFixed(1) +'/s, C=' +successCount +', E=' +errorCount +', O: ' +noOfOpenRequests +'/' +maxOpenRequests +')');
+  console.log('Update: ' +Number(requestsSinceUpdate/(elapsedTime/1000)).toFixed(1) +'/s, S=' +successCount +', E=' +errorCount +', O: ' +noOfOpenRequests +'/' +maxOpenRequests +')');
   requestsSinceUpdate = 0;
 };
 updateTime = new Date().getTime();
