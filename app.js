@@ -18,6 +18,8 @@ var numCPUs = os.cpus().length
   , rampUpTimeInSeconds = Number(argv.ramp) || 600
   , targetNumberOfRequestsPerSecond = 1
   , numberOfRequestsPerSecond
+  , totalNumberOfRequests = 0
+  , averageRate = 0
   , tlsOptions
   , interval = argv.interval || 10
   , host = argv.host || 'api.travel.test.cloud.bbc.co.uk'
@@ -103,7 +105,7 @@ nextRequest();
 setInterval(nextRequest, interval);
 
 
-console.log('Max concurrent requests', maxOpenRequests, ' (use ulimit -n $ to increase).');
+console.log('Max concurrent requests', maxOpenRequests, '(use ulimit -n $ to increase).');
 console.log('Using', testDataLength, 'location ids.')
 
 function update() {
@@ -112,15 +114,21 @@ function update() {
   totalTime += elapsedTime;
   totalTimeInSeconds = Math.floor(totalTime / 1000);
   updateTime = time;
+  totalNumberOfRequests += requestsSinceUpdate;
   numberOfRequestsPerSecond = requestsSinceUpdate ? Number(requestsSinceUpdate/(elapsedTime/1000)) : 0;
-  console.log(
-    ('Rate: ' +numberOfRequestsPerSecond.toFixed(1) +'/s').cyan +', '
+  averageRate = totalNumberOfRequests ? Number(totalNumberOfRequests/totalTimeInSeconds).toFixed(1) : 0;
+  requestsSinceUpdate = 0;
+  process.stdout.clearLine();
+  process.stdout.cursorTo(0);
+  process.stdout.write(
+    ('Time: ' +totalTimeInSeconds +' sec').grey +', '
+    + ('Rate: ' +numberOfRequestsPerSecond.toFixed(1) +'/s').cyan +', '
+    + ('Average: ' +averageRate +'/s').blue +', '
     + ('S: ' +successCount ).green +', ' 
     + ('E: ' +errorCount).red +', '
     + ('Connections: ' +noOfOpenRequests +'/' +maxOpenRequests).magenta +', '
-    + ('Ramp: ' +targetNumberOfRequestsPerSecond +' (' +totalTimeInSeconds +'/' +rampUpTimeInSeconds +' sec)').yellow
+    + ('Ramp: ' +targetNumberOfRequestsPerSecond +'/s (' +maxNumberOfRequestsPerSecond +'/s over ' +rampUpTimeInSeconds +' sec)').yellow
   );
-  requestsSinceUpdate = 0;
 };
 updateTime = new Date().getTime();
 setInterval(update, 1000);
