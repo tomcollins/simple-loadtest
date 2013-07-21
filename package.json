@@ -10,7 +10,8 @@
   "dependencies": {
     "optimist": "0.5",
     "request": "2.22",
-    "posix": "1.0"
+    "posix": "1.0",
+    "colors": "0.6"
   },
   "devDependencies": {},
   "engines": {

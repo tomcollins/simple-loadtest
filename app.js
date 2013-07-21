@@ -6,7 +6,7 @@ var tls = require('tls')
   , cluster = require('cluster')
   , posix = require('posix')
   , argv = require('optimist').argv
-  , request = require('request');
+  , colors = require('colors');
 
 var numCPUs = os.cpus().length
   , port = argv.port || 3000
@@ -114,10 +114,11 @@ function update() {
   updateTime = time;
   numberOfRequestsPerSecond = requestsSinceUpdate ? Number(requestsSinceUpdate/(elapsedTime/1000)) : 0;
   console.log(
-    'Rate: ' +numberOfRequestsPerSecond.toFixed(1) +'/s, '
-    + 'S=' +successCount +', E=' +errorCount +', '
-    + 'Connections: ' +noOfOpenRequests +'/' +maxOpenRequests +', '
-    + 'Ramp: ' +targetNumberOfRequestsPerSecond +' (' +totalTimeInSeconds +'/' +rampUpTimeInSeconds +' sec)'
+    ('Rate: ' +numberOfRequestsPerSecond.toFixed(1) +'/s').cyan +', '
+    + ('S: ' +successCount ).green +', ' 
+    + ('E: ' +errorCount).red +', '
+    + ('Connections: ' +noOfOpenRequests +'/' +maxOpenRequests).magenta +', '
+    + ('Ramp: ' +targetNumberOfRequestsPerSecond +' (' +totalTimeInSeconds +'/' +rampUpTimeInSeconds +' sec)').yellow
   );
   requestsSinceUpdate = 0;
 };
