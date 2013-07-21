@@ -14,8 +14,12 @@ var numCPUs = os.cpus().length
   , cert = argv.cert || 'dev.bbc.co.uk.pem'
   , key = argv.cert || 'dev.bbc.co.uk.key'
   , ca = argv.ca || 'ca.pem'
+  , maxNumberOfRequestsPerSecond = Number(argv.target) || 10
+  , rampUpTimeInSeconds = Number(argv.ramp) || 600
+  , targetNumberOfRequestsPerSecond = 1
+  , numberOfRequestsPerSecond
   , tlsOptions
-  , interval = argv.interval || 1000
+  , interval = argv.interval || 10
   , host = argv.host || 'api.travel.test.cloud.bbc.co.uk'
   , path = argv.path || '/travel-incident-api/{id}/incidents'
   , noOfOpenRequests = 0
@@ -26,6 +30,8 @@ var numCPUs = os.cpus().length
   , testDataLength
   , testDataIndex = 0
   , requestsSinceUpdate = 0
+  , totalTime = 0
+  , totalTimeInSeconds = 0
   , updateTime
   , time
   , elapsedTime
@@ -65,7 +71,6 @@ function doRequest(id) {
       if (200 == res.statusCode) successCount++;
       else errorCount++;
       noOfOpenRequests--;
-      requestsSinceUpdate++;
       req = null;
       res = null;
     });
@@ -74,7 +79,6 @@ function doRequest(id) {
     //console.log('problem with request: ' + e.message);
     errorCount++;
     noOfOpenRequests--;
-    requestsSinceUpdate++;
     req = null;
     res = null;
   });
@@ -82,7 +86,15 @@ function doRequest(id) {
 }
 
 function nextRequest() {
-  if (noOfOpenRequests < maxOpenRequests) {
+
+  if (totalTimeInSeconds > rampUpTimeInSeconds) {
+    targetNumberOfRequestsPerSecond = maxNumberOfRequestsPerSecond;
+  } else { 
+    targetNumberOfRequestsPerSecond = Math.floor(maxNumberOfRequestsPerSecond * (totalTimeInSeconds/rampUpTimeInSeconds));
+  }
+
+  if (requestsSinceUpdate < targetNumberOfRequestsPerSecond && noOfOpenRequests < maxOpenRequests) {
+    requestsSinceUpdate++;
     doRequest(testData[testDataIndex++]);
     if (testDataIndex >= testDataLength) testDataIndex = 0;
   }
@@ -97,9 +109,18 @@ console.log('Using', testDataLength, 'location ids.')
 function update() {
   time = new Date().getTime();
   elapsedTime = time - updateTime;
+  totalTime += elapsedTime;
+  totalTimeInSeconds = Math.floor(totalTime / 1000);
   updateTime = time;
-  console.log('Update: ' +Number(requestsSinceUpdate/(elapsedTime/1000)).toFixed(1) +'/s, S=' +successCount +', E=' +errorCount +', O: ' +noOfOpenRequests +'/' +maxOpenRequests +')');
+  numberOfRequestsPerSecond = requestsSinceUpdate ? Number(requestsSinceUpdate/(elapsedTime/1000)) : 0;
+  console.log(
+    'Rate: ' +numberOfRequestsPerSecond.toFixed(1) +'/s, '
+    + 'S=' +successCount +', E=' +errorCount +', '
+    + 'Connections: ' +noOfOpenRequests +'/' +maxOpenRequests +', '
+    + 'Ramp: ' +targetNumberOfRequestsPerSecond +' (' +totalTimeInSeconds +'/' +rampUpTimeInSeconds +' sec)'
+  );
   requestsSinceUpdate = 0;
 };
 updateTime = new Date().getTime();
 setInterval(update, 1000);
+update();
