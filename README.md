@@ -1,6 +1,7 @@
 Installation
 
 git clone https://github.com/tomcollins/simple-loadtest.git
+npm install
 
 Usage
 
